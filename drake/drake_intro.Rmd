@@ -1,5 +1,5 @@
 ---
-title: 'Teamoverleg: voorstelling drake package'
+title: 'Introducing the drake package'
 author: "Hans Van Calster"
 date: "13 februari 2020"
 subtitle: ""
@@ -7,7 +7,7 @@ output:
   xaringan::moon_reader:
     lib_dir: libs
     css: ["default", "extra.css", "default-fonts"]
-    chakra: ../libs/remark-latest.min.js
+    chakra: libs/remark-latest.min.js
     nature:
       highlightStyle: github
       highlightLines: true
@@ -30,63 +30,127 @@ library(drake)
 xaringan::summon_remark(version = "latest", to = "libs/")
 ```
 
+## What's this all about?
 
+An evolution from:
 
-
-## Aanleiding
-
-- Eerst waren er R en r-scripts
-
---
-
-- Toen kwam Rmarkdown en bookdown
-    - van scripts naar gedocumenteerde scripts
-    - leren vermijden van copy-paste
-        - schrijf functies
-        - gebruik purrr
-        - gebruik parent-child documenten
+- r-scripts in `.R` files
 
 --
 
-Maar data-analyse en rapporteren wil je liefst zoveel mogelijk ontkoppelen
+- to `Rmarkdown` and `bookdown`
+    - scripts to documented scripts (literate programming)
+    - learn to avoid copy-paste
+        - write functions
+        - use `purrr`
+        - use parent-child documents
 
 --
 
-- markdowns met zware berekeningen
-    - lange runtime
-        - `cache = TRUE`, maar soms tricky
-    - (te) grote objecten in de environment
-    
-    
+But data-analysis and reporting is better decoupled
+
+--
+
+- markdowns with heavy calculations
+    - long runtime
+        - chunk option `cache = TRUE`, but can be tricky
+    - (too) big objects in the R environment
 
 ---
 
-## En toen was er `drake`
+## Enter `drake`
 
-- stimuleert je om te werken met functies
+- analysis pipeline comes first and is followed by reporting
+    - reporting can be integrated in the 'pipeline' as a last step (`knitr_in()` function)
+    - or completely separated (for instance in a different R project)
 
-- eerst de analysestappen, daarna rapportering en communicatie
-    - de rapportering kan gewoon geïntegreerd worden in de 'pipeline' als laatste stap (`knitr_in()` functie)
-    - of volledig gescheiden worden (bv in een ander R-project gebeuren)
+- stimulates to work with functions as much as possible
+
 
 --
 
-Kort filmpje met uitleg over `drake` package: https://books.ropensci.org/drake/index.html#short-version
+Short intro to the `drake` package: https://books.ropensci.org/drake/index.html#short-version
+
+```{r out.height="20%", out.width="20%", fig.align='center'}
+include_graphics(path = "drake_hex_logo.svg")
+```
+
+
+---
+
+## Simple workflow
+
+1. `drake_plan()`
+
+2. `make()`
+
+3. in case of errors `diagnose()`
+
+4. access the targets with `readd()` or `loadd()` and check them
+
+5. change the plan in 1.
+
+6. go to 2.
+
+---
+
+## Project structure for more complicated workflows
+
+````
+|- prj_drake
+|    |- prj_drake.Rproj
+|    |- run.R
+|    |- _drake.R
+|    |- R
+|    |    |- plan.R # the workflow containing all targets that need to be calculated
+|    |    |- functions_*.R # all functions that are needed
+|    |    |- packages.R # all packages that are needed
+````
+
+Example _drake.R:
+
+```{r echo=TRUE, eval=FALSE}
+source("R/packages.R")
+source("R/functions.R")
+source("R/plan.R")
+# options(clustermq.scheduler = "multicore") # optional parallel computing
+drake_config(plan, verbose = 2)
+```
+
+---
+
+## Continued
+
+Example run.R:
+
+```{r echo=TRUE, eval=FALSE}
+library(drake)
+r_outdated()
+
+r_make()
+
+r_outdated()
+
+library(visNetwork) # so the graph renders
+r_vis_drake_graph()
+```
+
+`r_make()` and other `r_*` will call _drake.R
 
 ---
 class: middle, center
 
-## Scale-up your work
+
 
 <iframe src="florabank_vis_graph.html" width="100%" height="80%" id="igraph"  scrolling="no" seamless="seamless" frameBorder="0" > </iframe>
 
-
+## Scale-up your work
 
 ---
 
 ## Static branching
 
-````
+```{r echo=TRUE, eval=FALSE}
 drake_plan(
   trace = TRUE,
   # all combinations 1a 1b 2a 2b
@@ -106,14 +170,14 @@ drake_plan(
   )
 )
 
-````
+```
 
 ---
 
 
 ## Dynamic branching
 
->Dynamic branching is an interface to declare new targets while make() is running. It lets you create more compact plans and graphs, it is easier to use than static branching, and it improves the startup speed of make() and friends.
+>Dynamic branching is an interface to declare new targets while `make()` is running. It lets you create more compact plans and graphs, it is easier to use than static branching, and it improves the startup speed of `make()` and friends.
 
 https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-use
 
@@ -121,35 +185,40 @@ https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-u
 
 ---
 
-## Enkele belangrijke zaken
+## What else?
 
-- integratie met git
-    - de `.cache` is standaard `gitignored`
-    - je kan een log-bestand maken -> wordt aangeraden om dit bestand onder versiebeheer te zetten.
-    - drake heeft ook een recovery feature
+- output formats
 
-- output formaten
+- `clean()` function
 
-- de `clean()` functie
-
-- `readd()` en `loadd()`
-
-- je kan meerdere caches aanmaken naast elkaar
+- multiple caches
 
 ---
 
-## Wat nog?
+## What else?
 
-- integratie met `docker`: 
+- integration with git
+    - the `.cache` folder is `gitignored`
+    - `make(cache_log_file = TRUE)` -> creates a csv log file with hashes for each target. This file should be put under version control
+    - drake also has a recovery feature
+    
+- integration with `docker`: 
     - drake outside docker: https://github.com/wlandau/drake-examples/tree/master/Docker-psock
     - drake inside docker: https://gitlab.com/ecohealthalliance/drake-gitlab-docker-example
 
-- integratie met `renv`:https://github.com/rstudio/renv
+- integration with `renv`:https://github.com/rstudio/renv
+    - ensures everyone will work with the same versions of R packages
 
-- integratie in een package: https://books.ropensci.org/drake/projects.html#workflows-as-r-packages
+- integration in a package: https://books.ropensci.org/drake/projects.html#workflows-as-r-packages
+
+---
+
+## Resources
+
+- check out https://github.com/ropensci/drake
 
 
-Resources: check out https://github.com/ropensci/drake
+
 
 
 
