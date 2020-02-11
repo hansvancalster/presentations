@@ -1,0 +1,166 @@
+---
+title: 'Teamoverleg: voorstelling drake package'
+author: "Hans Van Calster"
+date: "13 februari 2020"
+subtitle: ""
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: ["default", "extra.css", "default-fonts"]
+    chakra: ../libs/remark-latest.min.js
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+options(servr.daemon = TRUE)
+library(knitr)
+opts_chunk$set(echo = FALSE)
+
+library(tidyverse)
+library(drake)
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+xaringan::summon_remark(version = "latest", to = "libs/")
+```
+
+
+
+
+## Aanleiding
+
+- Eerst waren er R en r-scripts
+
+--
+
+- Toen kwam Rmarkdown en bookdown
+    - van scripts naar gedocumenteerde scripts
+    - leren vermijden van copy-paste
+        - schrijf functies
+        - gebruik purrr
+        - gebruik parent-child documenten
+
+--
+
+Maar data-analyse en rapporteren wil je liefst zoveel mogelijk ontkoppelen
+
+--
+
+- markdowns met zware berekeningen
+    - lange runtime
+        - `cache = TRUE`, maar soms tricky
+    - (te) grote objecten in de environment
+    
+    
+
+---
+
+## En toen was er `drake`
+
+- stimuleert je om te werken met functies
+
+- eerst de analysestappen, daarna rapportering en communicatie
+    - de rapportering kan gewoon geïntegreerd worden in de 'pipeline' als laatste stap (`knitr_in()` functie)
+    - of volledig gescheiden worden (bv in een ander R-project gebeuren)
+
+--
+
+Kort filmpje met uitleg over `drake` package: https://books.ropensci.org/drake/index.html#short-version
+
+---
+class: middle, center
+
+## Scale-up your work
+
+<iframe src="florabank_vis_graph.html" width="100%" height="80%" id="igraph"  scrolling="no" seamless="seamless" frameBorder="0" > </iframe>
+
+
+
+---
+
+## Static branching
+
+````
+drake_plan(
+  trace = TRUE,
+  # all combinations 1a 1b 2a 2b
+  crossed_targets = target(
+    my_function(..., factor_A, factor_B),
+    transform = cross(
+      factor_A = c(1, 2),
+      factor_B = c("a", "b")
+    ),
+    # rowwise combinations 1a and 2b
+    mapped_targets = target(
+    my_function(..., factor_A, factor_B),
+    transform = map(
+      factor_A = c(1, 2),
+      factor_B = c("a", "b")
+    )
+  )
+)
+
+````
+
+---
+
+
+## Dynamic branching
+
+>Dynamic branching is an interface to declare new targets while make() is running. It lets you create more compact plans and graphs, it is easier to use than static branching, and it improves the startup speed of make() and friends.
+
+https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-use
+
+
+
+---
+
+## Enkele belangrijke zaken
+
+- integratie met git
+    - de `.cache` is standaard `gitignored`
+    - je kan een log-bestand maken -> wordt aangeraden om dit bestand onder versiebeheer te zetten.
+    - drake heeft ook een recovery feature
+
+- output formaten
+
+- de `clean()` functie
+
+- `readd()` en `loadd()`
+
+- je kan meerdere caches aanmaken naast elkaar
+
+---
+
+## Wat nog?
+
+- integratie met `docker`: 
+    - drake outside docker: https://github.com/wlandau/drake-examples/tree/master/Docker-psock
+    - drake inside docker: https://gitlab.com/ecohealthalliance/drake-gitlab-docker-example
+
+- integratie met `renv`:https://github.com/rstudio/renv
+
+- integratie in een package: https://books.ropensci.org/drake/projects.html#workflows-as-r-packages
+
+
+Resources: check out https://github.com/ropensci/drake
+
+
+
+
+
+
+
+
+
+
+
+
+
+

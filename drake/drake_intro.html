@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Teamoverleg: voorstelling drake package</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Hans Van Calster" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="extra.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Teamoverleg: voorstelling drake package
+### Hans Van Calster
+### 13 februari 2020
+
+---
+
+
+
+
+
+
+
+
+
+
+
+## Aanleiding
+
+- Eerst waren er R en r-scripts
+
+--
+
+- Toen kwam Rmarkdown en bookdown
+    - van scripts naar gedocumenteerde scripts
+    - leren vermijden van copy-paste
+        - schrijf functies
+        - gebruik purrr
+        - gebruik parent-child documenten
+
+--
+
+Maar data-analyse en rapporteren wil je liefst zoveel mogelijk ontkoppelen
+
+--
+
+- markdowns met zware berekeningen
+    - lange runtime
+        - `cache = TRUE`, maar soms tricky
+    - (te) grote objecten in de environment
+    
+    
+
+---
+
+## En toen was er `drake`
+
+- stimuleert je om te werken met functies
+
+- eerst de analysestappen, daarna rapportering en communicatie
+    - de rapportering kan gewoon geïntegreerd worden in de 'pipeline' als laatste stap (`knitr_in()` functie)
+    - of volledig gescheiden worden (bv in een ander R-project gebeuren)
+
+--
+
+Kort filmpje met uitleg over `drake` package: https://books.ropensci.org/drake/index.html#short-version
+
+---
+class: middle, center
+
+## Scale-up your work
+
+&lt;iframe src="florabank_vis_graph.html" width="100%" height="80%" id="igraph"  scrolling="no" seamless="seamless" frameBorder="0" &gt; &lt;/iframe&gt;
+
+
+
+---
+
+## Static branching
+
+````
+drake_plan(
+  trace = TRUE,
+  # all combinations 1a 1b 2a 2b
+  crossed_targets = target(
+    my_function(..., factor_A, factor_B),
+    transform = cross(
+      factor_A = c(1, 2),
+      factor_B = c("a", "b")
+    ),
+    # rowwise combinations 1a and 2b
+    mapped_targets = target(
+    my_function(..., factor_A, factor_B),
+    transform = map(
+      factor_A = c(1, 2),
+      factor_B = c("a", "b")
+    )
+  )
+)
+
+````
+
+---
+
+
+## Dynamic branching
+
+&gt;Dynamic branching is an interface to declare new targets while make() is running. It lets you create more compact plans and graphs, it is easier to use than static branching, and it improves the startup speed of make() and friends.
+
+https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-use
+
+
+
+---
+
+## Enkele belangrijke zaken
+
+- integratie met git
+    - de `.cache` is standaard `gitignored`
+    - je kan een log-bestand maken -&gt; wordt aangeraden om dit bestand onder versiebeheer te zetten.
+    - drake heeft ook een recovery feature
+
+- output formaten
+
+- de `clean()` functie
+
+- `readd()` en `loadd()`
+
+- je kan meerdere caches aanmaken naast elkaar
+
+---
+
+## Wat nog?
+
+- integratie met `docker`: 
+    - drake outside docker: https://github.com/wlandau/drake-examples/tree/master/Docker-psock
+    - drake inside docker: https://gitlab.com/ecohealthalliance/drake-gitlab-docker-example
+
+- integratie met `renv`:https://github.com/rstudio/renv
+
+- integratie in een package: https://books.ropensci.org/drake/projects.html#workflows-as-r-packages
+
+
+Resources: check out https://github.com/ropensci/drake
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="../libs/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
