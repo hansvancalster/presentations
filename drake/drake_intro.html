@@ -6,6 +6,10 @@
     <meta name="author" content="Hans Van Calster" />
     <link href="libs/remark-css/default.css" rel="stylesheet" />
     <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <script src="libs/htmlwidgets/htmlwidgets.js"></script>
+    <link href="libs/vis/vis.css" rel="stylesheet" />
+    <script src="libs/vis/vis.min.js"></script>
+    <script src="libs/visNetwork-binding/visNetwork.js"></script>
     <link rel="stylesheet" href="extra.css" type="text/css" />
   </head>
   <body>
@@ -143,32 +147,41 @@ class: middle, center
 
 ---
 
-## Static branching
+## Static branching: map(), cross() and combine()
 
 
 ```r
-drake_plan(
+numlet &lt;- function(numbers, letters) {
+  paste0(numbers, letters)
+}
+
+plan &lt;- drake_plan(
   trace = TRUE,
-  # all combinations 1a 1b 2a 2b
   crossed_targets = target(
-    my_function(..., factor_A, factor_B),
+    numlet(numbers, letters),
     transform = cross(
-      factor_A = c(1, 2),
-      factor_B = c("a", "b")
-    ),
-    # rowwise combinations 1a and 2b
+      numbers = c(1, 2),
+      letters = c("a", "b")
+    )),
     mapped_targets = target(
-    my_function(..., factor_A, factor_B),
+    numlet(numbers, letters),
     transform = map(
-      factor_A = c(1, 2),
-      factor_B = c("a", "b")
-    )
+      numbers = c(1, 2),
+      letters = c("a", "b")
+    )),
+  combined_targets = target(
+    paste0(crossed_targets),
+    transform = combine(crossed_targets)
   )
 )
 ```
 
 ---
 
+<div id="htmlwidget-613e3759ec97d12808d2" style="width:504px;height:504px;" class="visNetwork html-widget"></div>
+<script type="application/json" data-for="htmlwidget-613e3759ec97d12808d2">{"x":{"nodes":{"id":["numlet","crossed_targets_1_a","crossed_targets_1_b","crossed_targets_2_a","crossed_targets_2_b","mapped_targets_2_b","mapped_targets_1_a","combined_targets"],"imported":[true,false,false,false,false,false,false,false],"label":["numlet","crossed_targets_1_a","crossed_targets_1_b","crossed_targets_2_a","crossed_targets_2_b","mapped_targets_2_b","mapped_targets_1_a","combined_targets"],"status":["imported","outdated","outdated","outdated","outdated","outdated","outdated","outdated"],"type":["function","object","object","object","object","object","object","object"],"font.size":[20,20,20,20,20,20,20,20],"color":["#1874CD","#000000","#000000","#000000","#000000","#000000","#000000","#000000"],"shape":["triangle","dot","dot","dot","dot","dot","dot","dot"],"level":[1,2,2,2,2,2,2,3],"x":[-1,0,0,0,0,0,0,1],"y":[2.22044604925031e-016,-1,-0.6,-0.2,0.2,0.6,1,2.22044604925031e-016]},"edges":{"from":["crossed_targets_1_a","crossed_targets_1_b","crossed_targets_2_a","crossed_targets_2_b","numlet","numlet","numlet","numlet","numlet","numlet"],"to":["combined_targets","combined_targets","combined_targets","combined_targets","crossed_targets_1_a","crossed_targets_1_b","crossed_targets_2_a","crossed_targets_2_b","mapped_targets_2_b","mapped_targets_1_a"],"arrows":["to","to","to","to","to","to","to","to","to","to"]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"interaction":{"navigationButtons":true},"layout":{"hierarchical":{"enabled":true,"direction":"LR"}}},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":{"text":"Dependency graph","style":"font-family:Georgia, Times New Roman, Times, serif;font-weight:bold;font-size:20px;text-align:center;"},"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","highlight":{"enabled":false,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":true,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"},"legend":{"width":0.2,"useGroups":false,"position":"left","ncol":1,"stepX":100,"stepY":100,"zoom":true,"nodes":{"label":["Outdated","Imported","Object","Function"],"color":["#000000","#1874CD","#888888","#888888"],"shape":["dot","dot","dot","triangle"],"font.color":["black","black","black","black"],"font.size":[20,20,20,20],"id":[2,5,7,9]},"nodesToDataframe":true},"tooltipStay":300,"tooltipStyle":"position: fixed;visibility:hidden;padding: 5px;white-space: nowrap;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);"},"evals":[],"jsHooks":[]}</script>
+
+---
 
 ## Dynamic branching
 
@@ -176,17 +189,34 @@ drake_plan(
 
 https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-use
 
+- `map()`
 
+- `cross()`
+
+- `group()`
+
+- during testing, use `make(plan, max_expand = 2)` to limit the number of dynamic targets
+
+---
+
+## Memory management
+
+- when developing a drake pipeline: 
+    - monitor memory usage
+    - balance the number of cores to use against memory
+    - https://books.ropensci.org/drake/memory.html
 
 ---
 
 ## What else?
 
-- output formats
+- specialized output formats for targets: https://books.ropensci.org/drake/storage.html
 
-- `clean()` function
+- `which_clean()` and `clean()` function: check and clean cached targets (so you can force rebuilding targets if a change happened upstream that drake cannot detect)
 
-- multiple caches
+- `cached()` function: lists targets in the cache
+
+- multiple caches: create one with `new_cache()`
 
 ---
 
@@ -210,7 +240,8 @@ https://books.ropensci.org/drake/dynamic.html#which-kind-of-branching-should-i-u
 
 ## Resources
 
-- check out https://github.com/ropensci/drake
+- https://github.com/ropensci/drake#documentation
+- https://books.ropensci.org/drake/index.html#documentation
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="libs/remark-latest.min.js"></script>
