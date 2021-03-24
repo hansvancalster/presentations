@@ -1,0 +1,391 @@
+---
+title: "Ontwikkeling, beheer en open publicatie van INBO protocols"
+subtitle: "Opleiding in kader van protocollen Meetnetten Natuurlijk Milieu"
+author: "Hans Van Calster"
+institute: "INBO"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+editor_options: 
+  chunk_output_type: console
+---
+class: center, middle
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+library(knitr)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE)
+library(rprojroot)
+library(dplyr)
+root <- find_root_file("protocols",criterion =  is_git_root)
+```
+
+```{r, load_refs, include=FALSE, cache=FALSE}
+library(RefManageR)
+BibOptions(check.entries = FALSE, 
+           bib.style = "authoryear", 
+           cite.style = 'authoryear', 
+           style = "markdown",
+           hyperlink = FALSE, 
+           dashed = FALSE,
+           max.names = 1,
+           no.print.fields = c("url", "isbn"),
+           sorting = "nyt")
+florbib <- ReadBib("G:/Mijn Drive/Zotero/florabank.bib", check = FALSE)
+```
+
+# Migratie van protocollen
+
+
+---
+# Open Science Doelstellingen
+
+- De gegevensinzameling verloopt volgens protocollen
+    - protocolsjablonen aanreiken
+    - centralisatie protocollen (platform)
+    - bemonstering/voorbehandeling ondersteunen; labo-analysen
+    - applicaties gegevensinvoer
+
+- De protocollen zijn open
+    - online ontsluiten veldprotocollen
+    - uitwerken van formaat voor protocollen
+    - opleiding aanbieden voor opstellen van protocollen
+
+- Protocollen worden gearchiveerd
+    - aanbieden van richtlijnen en ondersteuning voor archivering van protocollen
+
+---
+# Aanpak tot nu toe
+
+- ontwikkeling op google drive
+    - templates in docx formaat voor SVP, SIP, SAP, SOP
+    - geen template voor project-specifieke protocollen
+    - wijzigingen worden 'manueel' bijgehouden
+
+- goedkeuringsprocedure
+
+- goedgekeurd protocol ontsloten via interne google site
+
+- outputformaat = docx
+    - afdrukken naar pdf mogelijk
+
+---
+# Naar open, geversioneerde, en gearchiveerde protocollen
+
+- migratie van google drive / sites naar:
+
+    - https://github.com/inbo/protocols
+        - brontekst en -code = rmarkdown bestanden
+        - Git versiebeheer
+        - review en goedkeuringsprocedure is deel van het proces om een protocol gepubliceerd te krijgen (via een Pull Request)
+        - R package met tools om protocols te ontwikkelen en publiceren: https://github.com/inbo/protocolhelper
+        
+    - https://protocols.inbo.be/
+        - website die de gepubliceerde protocols zal bevatten (html formaat, afdruk naar pdf mogelijk)
+        - ook automatische archivering via Zenodo
+
+
+---
+class: center, middle
+
+# Protocols overzicht
+
+---
+
+```{r out.width="100%"}
+suppressPackageStartupMessages(library(DiagrammeR))
+
+flowchart1 <- grViz(diagram = file.path(root, "flowchart1.dot"))
+
+
+widgetframe::frameableWidget(flowchart1) 
+```
+
+
+---
+## Protocol-code
+
+
+```{r}
+tab <- tibble::tribble(
+         ~type,       ~theme, ~theme_number, ~`protocol-code`,
+       "field",    "generic",            0L,          "sfp-0##-nl",
+       "field",      "water",            1L,          "sfp-1##-nl",
+       "field",        "air",            2L,          "sfp-2##-nl",
+       "field",       "soil",            3L,          "sfp-3##-nl",
+       "field", "vegetation",            4L,          "sfp-4##-nl",
+       "field",    "species",            5L,          "sfp-5##-nl",
+  "instrument",           NA,            NA,           "sip-###-nl",
+   "operating",           NA,            NA,           "sop-###-nl",
+    "activity",           NA,            NA,           "sap-###-nl",
+     "project",           NA,            NA,           "spp-###-nl"
+  )
+tab %>%
+  kable()
+```
+
+---
+## Taal waarin een protocol geschreven is
+
+
+- er zijn templates voorzien voor `nl` en `en`
+
+- een vertaling van een protocol wordt beschouwd als een apart protocol
+
+    - cf protocolcode bevat `nl` of `en`
+
+    - komt in aparte, eigen map terecht (subfolder = `<protocol-code>_<short-title>`)
+
+    - er is geen mogelijkheid om taal interactief te kiezen op de website
+
+---
+## Versie-nummers en tags
+
+`YYYY.NN`
+
+--
+
+bv.:
+
+- 2021.01
+    - eerste versie van sfp-001-nl
+- 2021.02
+    - eerste versie van sfp-101-nl
+- 2021.03
+    - tweede versie van sfp-001-nl
+
+--
+
+Bij elke publicatie van een protocol (= een release) worden ook twee tags gemaakt:
+
+- `protocols-YYYY.NN`
+    - incrementeel en onafhankelijk van welk protocol werd toegevoegd
+    - = tag waarmee GitHub Release wordt gemaakt
+- `<protocolcode>-YYYY.NN`
+    - identificeert welk protocol werd toegevoegd of ge-update werd
+    - laat toe om gemakkelijk alle versies van een protocol op te zoeken
+
+
+---
+class: center, middle
+# Anatomie van Rmarkdown
+
+---
+## YAML sectie met metadata en parameters
+
+```yaml
+title: Klassieke vegetatieopname in een proefvlak aan de hand van visuele inschattingen van bedekking van soorten in (semi-)terrestrische vegetatie
+author: [Els De Bie]
+date: "`r Sys.Date()`"
+params:
+  reviewers: [Hans Van Calster,Lieve Vriens,Jan Wouters,Wouter Van Gompel,Els Lommelen]
+  file_manager: Hans Van Calster
+  protocol_code: sfp-401-nl
+  version_number: "2021.00.dev"
+  language: nl
+  theme: vegetation
+  dependencies_protocolcode: !r NA
+  dependencies_versionnumber: !r NA
+  dependencies_params: !r NA
+  dependencies_appendix: !r NA
+  plot_width_openveg_m: 3
+  plot_length_openveg_m: 3
+site: bookdown::bookdown_site
+output: 
+  bookdown::gitbook:
+    split_by: none
+    split_bib: FALSE
+bibliography: sfp-401.bib
+```
+---
+## Tekst
+
+```markdown
+# Hoofdstuktitel
+
+Een zin met woorden in *italic*, **bold**.
+
+## Sectietitel
+
+Een opsomming:
+
+- punt 1
+- punt 2
+    - punt 2a
+    - punt 2b
+
+### Subsectietitel
+
+Een genummerde opsomming:
+
+1. punt 1
+1. punt 2
+
+```
+
+---
+## Tekst
+
+Kruisverwijzingen:
+
+```markdown
+Een kruisverwijzing naar:
+
+- figuur \@ref(fig:label), 
+- tabel \@ref(tab:label2), 
+- sectie \@ref(titel-van-de-sectie).
+```
+
+Verwijzingen naar referenties:
+
+```markdown
+Volgens @Vanderhaeghe2021 zijn protocols ...
+... einde van zin [@Vanderhaeghe2021; @Wouters2021].
+```
+
+Video invoegen:
+
+```markdown
+![](https://player.vimeo.com/video/142172484)
+```
+
+
+
+---
+## R code chunks
+
+Vooral nuttig voor tabellen en figuren.
+
+- bestaande figuur invoegen:
+    ````markdown
+    `r ''````{r, fig.cap = "Uitleg bij de figuur."}
+    knitr::include_graphics("media/mijn_figuur.png")
+    ```
+    ````
+
+- figuur maken in R en invoegen
+
+    ````markdown
+    `r ''````{r, out.width = "100%", fig.cap = "Uitleg bij de figuur."}
+    library(ggplot2)
+    ggplot(mtcars) + 
+      aes(mpg, disp) + 
+      geom_point() +
+      geom_smooth()
+    ```
+    ````
+---
+## R code chunks
+
+- tabel inlezen en invoegen
+
+    ````markdown
+    `r ''````{r}
+    library(readr)
+    library(knitr)
+    mijn_tabel <- read_csv("data/tabelgegevens.csv")
+    kable(mijn_tabel, caption = "Uitleg bij tabel")
+    ```
+    ````
+
+- of tabel maken in R en invoegen
+
+    ````markdown
+    `r ''````{r}
+    library(knitr)
+    mijn_tabel <- tibble::tribble(
+    ~type,    ~theme, ~theme_number, ~`protocol-code`,
+    "field", "generic",            0L,          "sfp-0",
+    "field",   "water",            1L,          "sfp-1",
+    "field",     "air",            2L,          "sfp-2"
+    )
+    kable(mijn_tabel, caption = "Uitleg bij tabel")
+    ```
+    ````
+
+
+---
+## Meer weten
+
+- https://bookdown.org/yihui/bookdown/
+
+- https://player.vimeo.com/video/142172484
+
+- https://bookdown.org/yihui/rmarkdown/
+
+- https://bookdown.org/yihui/rmarkdown-cookbook/
+
+---
+class: center, middle
+# Hoe aan de slag gaan?
+
+#### https://github.com/inbo/protocols/blob/master/CONTRIBUTING.md
+
+---
+# Demos
+
+- Nieuw protocol starten
+
+- Bestaand docx protocol omzetten
+
+- Update van een protocol
+
+- Project-specifiek protocol maken met subprotocollen
+
+
+
+---
+class: center, middle
+# Ondersteuning
+
+---
+# Hulp is nabij
+
+- MNM project ondersteuning door BMK
+    
+    - bodemprotocollen: Hans
+
+    - oppervlaktewater: Toon Westra 
+
+    - selectieprotocol: Toon Westra
+
+    - grondwater: Toon Van Daele
+    
+- Of een issue plaatsen
+    
+    - https://github.com/inbo/protocols/issues (vragen / problemen bij ontwikkelen protocols)
+
+    - https://github.com/inbo/protocolhelper/issues (requests voor ontbrekende tools, functionaliteiten)
+
+---
+# Stand van zaken en verdere afspraken
+
+- unit-selection protocols
+
+    - selectieprotocol
+
+- subsampling protocols & measurement protocols
+
+    - oppervlaktewater
+
+    - grondwater
+
+    - bodem
+
+---
+# Referenties
+
+```{r refs, echo=FALSE, results="asis"}
+PrintBibliography(florbib)
+```
+
+---
+

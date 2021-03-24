@@ -1,0 +1,29 @@
+digraph protocols {
+# define nodes
+node [shape = circle]
+A [label = "Type protocol"]
+B [label = "Thematisch"]
+C [label = "Project-specifiek"]
+D [label = "Andere"]
+
+1 [label = "sfp"]; 2 [label = "spp"]; 3 [label = "sip"]; 4 [label = "sop"]
+5 [label = "sap"]
+
+a [label = "generiek"]
+b [label = "water"]
+c [label = "lucht"]
+d [label = "bodem"]
+e [label = "vegetatie"]
+f [label = "soorten"]
+
+# add edge statements
+A -> {B C D}
+B -> 1
+C -> 2
+D -> {3 4 5}
+1 -> {a b c d e f}
+
+
+# add a graph statement
+
+}
