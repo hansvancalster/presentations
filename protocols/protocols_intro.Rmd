@@ -92,6 +92,9 @@ florbib <- ReadBib("G:/Mijn Drive/Zotero/florabank.bib", check = FALSE)
         - website die de gepubliceerde protocols zal bevatten (html formaat, afdruk naar pdf mogelijk)
         - ook automatische archivering via Zenodo
 
+- overgangsperiode:
+    - google site publiek beschikbaar maken?
+
 
 ---
 class: center, middle
